@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Volume2, Search, Heart, Wind, BookOpen, Music } from 'lucide-react';
+import { Play, Pause, Volume2, Wind, Music } from 'lucide-react';
 
 const MindSpace = () => {
   // --- STATE MANAGEMENT ---
@@ -22,37 +22,25 @@ const MindSpace = () => {
   const [volume, setVolume] = useState(70);
   const [audioElement, setAudioElement] = useState(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-
   // --- MOCK DATA ---
   const moods = ['Anxious', 'Grateful', 'Overwhelmed', 'Calm', 'Excited'];
-  const resources = [
-    { id: 1, title: '5 Grounding Techniques', category: 'Anxiety', icon: <Heart size={18} /> },
-    { id: 2, title: 'Understanding Burnout', category: 'Stress', icon: <BookOpen size={18} /> },
-    { id: 3, title: 'Sleep Hygiene 101', category: 'Habits', icon: <Music size={18} /> },
-    { id: 4, title: 'Journaling for Beginners', category: 'Mindfulness', icon: <BookOpen size={18} /> },
-  ];
 
   // --- AUDIO LOGIC EFFECT ---
   useEffect(() => {
-    // Create audio element instance if it doesn't exist
     const audio = audioElement || new Audio(currentTrack.src);
     if (!audioElement) setAudioElement(audio);
 
-    // If the track source changed, update it
     if (audio.src !== window.location.origin + currentTrack.src) {
       audio.src = currentTrack.src;
       if (isPlaying) audio.play().catch(e => console.log("Audio play interrupted"));
     }
 
-    // Play or Pause execution
     if (isPlaying) {
       audio.play().catch(e => console.log("Playback interaction required first"));
     } else {
       audio.pause();
     }
 
-    // Sync volume level slider
     audio.volume = volume / 100;
 
     return () => {
@@ -101,11 +89,6 @@ const MindSpace = () => {
     return () => clearInterval(interval);
   }, [isBreathing]);
 
-  const filteredResources = resources.filter(res => 
-    res.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    res.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="min-h-screen bg-teal-50 text-slate-800 font-sans p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -120,10 +103,10 @@ const MindSpace = () => {
           </div>
         </header>
 
-        {/* Dynamic Grid Dashboard */}
+        {/* Dynamic 2-Column Grid Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Column One: Journal & Breathing */}
+          {/* Main Workspace Column */}
           <div className="lg:col-span-2 space-y-8">
             
             {/* Feature 1: Interactive Journaling */}
@@ -187,7 +170,6 @@ const MindSpace = () => {
               <p className="text-indigo-600 mb-8 text-sm">Calm your nervous system in minutes.</p>
               
               <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-                {/* Visual Scale Animation Ring */}
                 <div 
                   className="absolute bg-indigo-200 rounded-full opacity-50 transition-all duration-1000 ease-in-out"
                   style={{
@@ -212,7 +194,7 @@ const MindSpace = () => {
             </section>
           </div>
 
-          {/* Column Two: Sidebar Controls */}
+          {/* Sidebar Playlist Column */}
           <div className="space-y-8">
             
             {/* Feature 3: Live Audio Player */}
@@ -235,7 +217,6 @@ const MindSpace = () => {
                   {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
                 </button>
                 
-                {/* Volume Slider Control */}
                 <div className="flex items-center gap-2 text-slate-400 flex-1 justify-end">
                   <Volume2 size={18} />
                   <input 
@@ -249,7 +230,6 @@ const MindSpace = () => {
                 </div>
               </div>
 
-              {/* Dynamic Mock Playback Progress Bar */}
               <div className="w-full h-1 bg-slate-700 rounded-full mb-6 overflow-hidden">
                 <div className={`h-full bg-teal-400 transition-all duration-300 ${isPlaying ? 'w-1/3' : 'w-1/12'}`} />
               </div>
@@ -269,45 +249,14 @@ const MindSpace = () => {
               </div>
             </section>
 
-            {/* Feature 4: Filterable Resource Hub */}
-            <section className="bg-white p-6 rounded-2xl shadow-sm border border-teal-100">
-              <h2 className="text-lg font-semibold mb-4 text-slate-700">Resource Hub</h2>
-              
-              <div className="relative mb-4">
-                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text"
-                  placeholder="Search tips or categories..."
-                  className="w-full pl-10 pr-4 py-2 bg-teal-50/70 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm transition-all"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto pr-1">
-                {filteredResources.length > 0 ? (
-                  filteredResources.map(res => (
-                    <div 
-                      key={res.id} 
-                      className="flex items-center p-3 hover:bg-teal-50/50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-teal-100"
-                    >
-                      <div className="p-2 bg-teal-100 text-teal-600 rounded-lg mr-3 shrink-0">
-                        {res.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-700 line-clamp-1">{res.title}</h3>
-                        <p className="text-xs text-slate-400 font-medium">{res.category}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-4">No matching resources found.</p>
-                )}
-              </div>
-            </section>
-
           </div>
         </div>
+
+        {/* Minimalist Attribution Footer */}
+        <footer className="text-center text-xs text-teal-600/60 pt-8 pb-4">
+          <p>Audio streams courtesy of Pixabay & Chosic. Safe Sanctuary Built With Care.</p>
+        </footer>
+
       </div>
     </div>
   );
