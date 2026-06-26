@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-fade-in: fadeIn 0.4s ease-out forwards;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Global Transitions & Reset overrides */
+body {
+  margin: 0;
+  background-color: #f0fdfa; /* Equates to bg-teal-50 */
+}
+
+/* Custom platform scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f0fdfa;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccfbf1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #99f6e4;
+}
