@@ -11,15 +11,21 @@ const MindSpace = () => {
   const [breathePhase, setBreathePhase] = useState('Ready');
   const [breatheTimer, setBreatheTimer] = useState(4);
 
+  // Audio Player State
+  const tracks = [
+    { title: 'Midnight Lo-Fi', src: '/midnight-lofi.mp3' },
+    { title: 'Rain Drops', src: '/rain-drops.mp3' },
+    { title: 'Forest Ambience', src: '/forest-ambience.mp3' }
+  ];
+  const [currentTrack, setCurrentTrack] = useState(tracks[0]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState('Midnight Lo-Fi');
   const [volume, setVolume] = useState(70);
+  const [audioElement, setAudioElement] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
 
   // --- MOCK DATA ---
   const moods = ['Anxious', 'Grateful', 'Overwhelmed', 'Calm', 'Excited'];
-  const tracks = ['Midnight Lo-Fi', 'Rain Drops', 'Forest Ambience'];
   const resources = [
     { id: 1, title: '5 Grounding Techniques', category: 'Anxiety', icon: <Heart size={18} /> },
     { id: 2, title: 'Understanding Burnout', category: 'Stress', icon: <BookOpen size={18} /> },
@@ -27,7 +33,34 @@ const MindSpace = () => {
     { id: 4, title: 'Journaling for Beginners', category: 'Mindfulness', icon: <BookOpen size={18} /> },
   ];
 
-  // --- LOGIC HANDLERS ---
+  // --- AUDIO LOGIC EFFECT ---
+  useEffect(() => {
+    // Create audio element instance if it doesn't exist
+    const audio = audioElement || new Audio(currentTrack.src);
+    if (!audioElement) setAudioElement(audio);
+
+    // If the track source changed, update it
+    if (audio.src !== window.location.origin + currentTrack.src) {
+      audio.src = currentTrack.src;
+      if (isPlaying) audio.play().catch(e => console.log("Audio play interrupted"));
+    }
+
+    // Play or Pause execution
+    if (isPlaying) {
+      audio.play().catch(e => console.log("Playback interaction required first"));
+    } else {
+      audio.pause();
+    }
+
+    // Sync volume level slider
+    audio.volume = volume / 100;
+
+    return () => {
+      if (!audioElement) audio.pause();
+    };
+  }, [isPlaying, currentTrack, volume]);
+
+  // --- JOURNAL ENTRY HANDLER ---
   const handleSaveEntry = () => {
     if (journalText.trim() === '' || !selectedMood) return;
     const newEntry = {
@@ -41,6 +74,7 @@ const MindSpace = () => {
     setSelectedMood('');
   };
 
+  // --- BREATHING TIMER CYCLE ---
   useEffect(() => {
     let interval;
     if (isBreathing) {
@@ -72,12 +106,11 @@ const MindSpace = () => {
     res.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // --- UI LAYOUT ---
   return (
     <div className="min-h-screen bg-teal-50 text-slate-800 font-sans p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Main App Header */}
+        {/* Header Section */}
         <header className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold text-teal-800 flex items-center gap-2">
@@ -87,13 +120,13 @@ const MindSpace = () => {
           </div>
         </header>
 
-        {/* Responsive Grid Layout */}
+        {/* Dynamic Grid Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Main Content Column */}
+          {/* Column One: Journal & Breathing */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Feature 1: Interactive Daily Journal */}
+            {/* Feature 1: Interactive Journaling */}
             <section className="bg-white p-6 rounded-2xl shadow-sm border border-teal-100 transition-all hover:shadow-md">
               <h2 className="text-xl font-semibold mb-4 text-slate-700">How are you feeling?</h2>
               <textarea
@@ -103,9 +136,7 @@ const MindSpace = () => {
                 value={journalText}
                 onChange={(e) => setJournalText(e.target.value)}
               />
-              
               <div className="flex flex-wrap items-center justify-between mt-4 gap-4">
-                {/* Mood Tag Selectors */}
                 <div className="flex flex-wrap gap-2">
                   {moods.map((mood) => (
                     <button
@@ -123,13 +154,13 @@ const MindSpace = () => {
                 </div>
                 <button 
                   onClick={handleSaveEntry}
-                  className="bg-slate-800 text-white px-6 py-2 rounded-full hover:bg-slate-700 transition-colors cursor-pointer font-medium"
+                  className="bg-slate-800 text-white px-6 py-2 rounded-full hover:bg-slate-700 transition-colors font-medium cursor-pointer"
                 >
                   Save Entry
                 </button>
               </div>
 
-              {/* History Logs Grid Display */}
+              {/* Saved Entry History Logs */}
               {entries.length > 0 && (
                 <div className="mt-8 pt-6 border-t border-teal-100">
                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Recent Entries</h3>
@@ -150,13 +181,13 @@ const MindSpace = () => {
               )}
             </section>
 
-            {/* Feature 2: 'Breathe' Animation Widget */}
+            {/* Feature 2: Box Breathing Widget */}
             <section className="bg-indigo-50 p-6 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center py-12 transition-all hover:shadow-md">
               <h2 className="text-xl font-semibold mb-2 text-indigo-900">Box Breathing (4-4-4-4)</h2>
               <p className="text-indigo-600 mb-8 text-sm">Calm your nervous system in minutes.</p>
               
               <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-                {/* Dynamically Scaled Core Circle via Inline Styles for pure v4 compatibility */}
+                {/* Visual Scale Animation Ring */}
                 <div 
                   className="absolute bg-indigo-200 rounded-full opacity-50 transition-all duration-1000 ease-in-out"
                   style={{
@@ -181,10 +212,10 @@ const MindSpace = () => {
             </section>
           </div>
 
-          {/* Sidebar Column */}
+          {/* Column Two: Sidebar Controls */}
           <div className="space-y-8">
             
-            {/* Feature 3: Mock Audio Player Container */}
+            {/* Feature 3: Live Audio Player */}
             <section className="bg-slate-800 p-6 rounded-2xl shadow-sm text-white">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-slate-700 rounded-lg"><Music size={20} className="text-teal-300"/></div>
@@ -193,10 +224,9 @@ const MindSpace = () => {
               
               <div className="mb-6">
                 <p className="text-xs text-slate-400 mb-1">Now Playing</p>
-                <p className="font-medium text-teal-300 text-base">{currentTrack}</p>
+                <p className="font-medium text-teal-300 text-base">{currentTrack.title}</p>
               </div>
 
-              {/* Player Controls */}
               <div className="flex items-center justify-between mb-6 gap-4">
                 <button 
                   onClick={() => setIsPlaying(!isPlaying)}
@@ -205,7 +235,7 @@ const MindSpace = () => {
                   {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
                 </button>
                 
-                {/* Interactive Volume Controller */}
+                {/* Volume Slider Control */}
                 <div className="flex items-center gap-2 text-slate-400 flex-1 justify-end">
                   <Volume2 size={18} />
                   <input 
@@ -219,32 +249,30 @@ const MindSpace = () => {
                 </div>
               </div>
 
-              {/* Audio Progress Bar Mock */}
+              {/* Dynamic Mock Playback Progress Bar */}
               <div className="w-full h-1 bg-slate-700 rounded-full mb-6 overflow-hidden">
                 <div className={`h-full bg-teal-400 transition-all duration-300 ${isPlaying ? 'w-1/3' : 'w-1/12'}`} />
               </div>
 
-              {/* Track Playlist */}
               <div className="space-y-1">
                 {tracks.map(track => (
                   <button 
-                    key={track}
+                    key={track.title}
                     onClick={() => { setCurrentTrack(track); setIsPlaying(true); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
-                      currentTrack === track ? 'bg-slate-700 text-teal-300 font-medium' : 'text-slate-400 hover:bg-slate-700/50'
+                      currentTrack.title === track.title ? 'bg-slate-700 text-teal-300 font-medium' : 'text-slate-400 hover:bg-slate-700/50'
                     }`}
                   >
-                    {track}
+                    {track.title}
                   </button>
                 ))}
               </div>
             </section>
 
-            {/* Feature 4: Filterable Resource Hub Grid */}
+            {/* Feature 4: Filterable Resource Hub */}
             <section className="bg-white p-6 rounded-2xl shadow-sm border border-teal-100">
               <h2 className="text-lg font-semibold mb-4 text-slate-700">Resource Hub</h2>
               
-              {/* Filter Search Field */}
               <div className="relative mb-4">
                 <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
                 <input 
@@ -256,7 +284,6 @@ const MindSpace = () => {
                 />
               </div>
 
-              {/* Filtered Article Collection */}
               <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto pr-1">
                 {filteredResources.length > 0 ? (
                   filteredResources.map(res => (
