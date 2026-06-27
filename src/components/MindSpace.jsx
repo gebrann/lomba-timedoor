@@ -28,7 +28,7 @@ const MindSpace = () => {
 
   // --- API INTEGRATION: GET DATA FROM BEECEPTOR ---
   useEffect(() => {
-    fetch('https://gebrann.free.beeceptor.com/message')
+    fetch('https://68b2bccfc28940c9e69d3ac5.mockapi.io/message')
       .then(response => response.json())
       .then(data => {
         console.log('Data GET dari Beeceptor:', data);
@@ -80,7 +80,7 @@ const MindSpace = () => {
     };
 
     // Mengirimkan data JSON (POST) ke Beeceptor
-    fetch('https://gebrann.free.beeceptor.com/message', {
+    fetch('https://68b2bccfc28940c9e69d3ac5.mockapi.io/message', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
