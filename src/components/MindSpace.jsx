@@ -3,6 +3,7 @@ import { Play, Pause, Volume2, Wind, Music } from 'lucide-react';
 
 const MindSpace = () => {
   // --- STATE MANAGEMENT ---
+  const [userName, setUserName] = useState('');
   const [journalText, setJournalText] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
   const [entries, setEntries] = useState([]);
@@ -24,6 +25,22 @@ const MindSpace = () => {
 
   // --- MOCK DATA ---
   const moods = ['Anxious', 'Grateful', 'Overwhelmed', 'Calm', 'Excited'];
+
+  // --- API INTEGRATION: GET DATA FROM BEECEPTOR ---
+  useEffect(() => {
+    fetch('https://gebrann.free.beeceptor.com/message')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Data GET dari Beeceptor:', data);
+        // Jika endpoint mengembalikan array data riwayat, masukkan ke state
+        if (Array.isArray(data)) {
+          setEntries(data);
+        }
+      })
+      .catch(error => {
+        console.error('Gagal GET data dari Beeceptor:', error);
+      });
+  }, []);
 
   // --- AUDIO LOGIC EFFECT ---
   useEffect(() => {
@@ -48,16 +65,43 @@ const MindSpace = () => {
     };
   }, [isPlaying, currentTrack, volume]);
 
-  // --- JOURNAL ENTRY HANDLER ---
+  // --- JOURNAL ENTRY HANDLER (POST TO BEECEPTOR) ---
   const handleSaveEntry = () => {
-    if (journalText.trim() === '' || !selectedMood) return;
-    const newEntry = {
-      id: Date.now(),
-      text: journalText,
+    if (userName.trim() === '' || journalText.trim() === '' || !selectedMood) {
+      alert('Isi nama, feeling, dan pikiranmu dulu ya, bang!');
+      return;
+    }
+
+    const entryData = {
+      name: userName.trim(),
       mood: selectedMood,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text: journalText.trim(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setEntries([newEntry, ...entries]);
+
+    // Mengirimkan data JSON (POST) ke Beeceptor
+    fetch('https://gebrann.free.beeceptor.com/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(entryData)
+    })
+    .then(response => {
+      console.log('Status POST ke Beeceptor:', response.status);
+      
+      // Update UI lokal agar kartu history langsung bertambah di layar secara realtime
+      const newLocalEntry = {
+        id: Date.now(),
+        ...entryData
+      };
+      setEntries(prevEntries => [newLocalEntry, ...prevEntries]);
+    })
+    .catch(error => {
+      console.error('Gagal POST data ke Beeceptor:', error);
+    });
+
+    // Reset input tulisan & mood
     setJournalText('');
     setSelectedMood('');
   };
@@ -103,22 +147,34 @@ const MindSpace = () => {
           </div>
         </header>
 
-        {/* Dynamic 2-Column Grid Dashboard */}
+        {/* Dashboard Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Main Workspace Column */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Feature 1: Interactive Journaling */}
+            {/* Feature 1: Interactive Journaling with API Actions */}
             <section className="bg-white p-6 rounded-2xl shadow-sm border border-teal-100 transition-all hover:shadow-md">
               <h2 className="text-xl font-semibold mb-4 text-slate-700">How are you feeling?</h2>
+              
+              {/* Kolom Input Nama */}
+              <input 
+                type="text"
+                placeholder="Masukkan namamu, bang..."
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full mb-3 p-3 bg-teal-50/50 border border-teal-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm transition-all"
+              />
+
+              {/* Kolom Teks Cerita */}
               <textarea
-                className="w-full p-4 bg-teal-50/50 border border-teal-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-300 resize-none transition-all"
+                className="w-full p-4 bg-teal-50/50 border border-teal-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-300 resize-none transition-all text-sm"
                 rows="4"
                 placeholder="Pour your thoughts here..."
                 value={journalText}
                 onChange={(e) => setJournalText(e.target.value)}
               />
+
               <div className="flex flex-wrap items-center justify-between mt-4 gap-4">
                 <div className="flex flex-wrap gap-2">
                   {moods.map((mood) => (
@@ -148,14 +204,15 @@ const MindSpace = () => {
                 <div className="mt-8 pt-6 border-t border-teal-100">
                   <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Recent Entries</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {entries.map((entry) => (
-                      <div key={entry.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 animate-fade-in">
+                    {entries.map((entry, index) => (
+                      <div key={entry.id || index} className="p-4 bg-slate-50 rounded-xl border border-slate-100 animate-fade-in">
                         <div className="flex justify-between items-start mb-2">
                           <span className="text-xs font-semibold bg-white px-2 py-1 rounded shadow-sm text-teal-600 border border-teal-50">
                             {entry.mood}
                           </span>
                           <span className="text-xs text-slate-400">{entry.timestamp}</span>
                         </div>
+                        <p className="text-xs font-bold text-slate-500 mb-1">Oleh: {entry.name}</p>
                         <p className="text-sm text-slate-600 whitespace-pre-wrap break-words">{entry.text}</p>
                       </div>
                     ))}
