@@ -26,21 +26,28 @@ const MindSpace = () => {
   // --- MOCK DATA ---
   const moods = ['Anxious', 'Grateful', 'Overwhelmed', 'Calm', 'Excited'];
 
-  // --- API INTEGRATION: GET DATA FROM BEECEPTOR ---
+  // Mengambil URL API dari Environment Variable Vite
+  const apiUrl = import.meta.env.VITE_DATA_COMMENT;
+
+  // --- API INTEGRATION: GET DATA FROM MDB/API VIA ENV VAR ---
   useEffect(() => {
-    fetch('https://68b2bccfc28940c9e69d3ac5.mockapi.io/message')
+    if (!apiUrl) {
+      console.warn('Variabel VITE_DATA_COMMENT belum terdefinisi, bang!');
+      return;
+    }
+
+    fetch(apiUrl)
       .then(response => response.json())
       .then(data => {
-        console.log('Data GET dari Beeceptor:', data);
-        // Jika endpoint mengembalikan array data riwayat, masukkan ke state
+        console.log('Data GET berhasil:', data);
         if (Array.isArray(data)) {
           setEntries(data);
         }
       })
       .catch(error => {
-        console.error('Gagal GET data dari Beeceptor:', error);
+        console.error('Gagal GET data:', error);
       });
-  }, []);
+  }, [apiUrl]);
 
   // --- AUDIO LOGIC EFFECT ---
   useEffect(() => {
@@ -65,10 +72,15 @@ const MindSpace = () => {
     };
   }, [isPlaying, currentTrack, volume]);
 
-  // --- JOURNAL ENTRY HANDLER (POST TO BEECEPTOR) ---
+  // --- JOURNAL ENTRY HANDLER (POST VIA ENV VAR) ---
   const handleSaveEntry = () => {
     if (userName.trim() === '' || journalText.trim() === '' || !selectedMood) {
       alert('Isi nama, feeling, dan pikiranmu dulu ya, bang!');
+      return;
+    }
+
+    if (!apiUrl) {
+      alert('Endpoint API (Env Var) belum siap di Cloudflare, bang!');
       return;
     }
 
@@ -79,8 +91,8 @@ const MindSpace = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    // Mengirimkan data JSON (POST) ke Beeceptor
-    fetch('https://68b2bccfc28940c9e69d3ac5.mockapi.io/message', {
+    // Mengirimkan data JSON (POST) menggunakan URL dari Env Var
+    fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +100,7 @@ const MindSpace = () => {
       body: JSON.stringify(entryData)
     })
     .then(response => {
-      console.log('Status POST ke Beeceptor:', response.status);
+      console.log('Status POST:', response.status);
       
       // Update UI lokal agar kartu history langsung bertambah di layar secara realtime
       const newLocalEntry = {
@@ -98,7 +110,7 @@ const MindSpace = () => {
       setEntries(prevEntries => [newLocalEntry, ...prevEntries]);
     })
     .catch(error => {
-      console.error('Gagal POST data ke Beeceptor:', error);
+      console.error('Gagal POST data:', error);
     });
 
     // Reset input tulisan & mood
@@ -212,7 +224,7 @@ const MindSpace = () => {
                           </span>
                           <span className="text-xs text-slate-400">{entry.timestamp}</span>
                         </div>
-                        <p className="text-xs font-bold text-slate-500 mb-1">Oleh: {entry.name}</p>
+                        <p className="text-xs font-bold text-slate-500 mb-1">Oleh: {entry.name || 'Anonim'}</p>
                         <p className="text-sm text-slate-600 whitespace-pre-wrap break-words">{entry.text}</p>
                       </div>
                     ))}
